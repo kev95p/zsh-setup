@@ -1,0 +1,103 @@
+# string formatters copy from brew install script :D
+if [[ -t 1 ]]
+then
+  tty_escape() { printf "\033[%sm" "$1"; }
+else
+  tty_escape() { :; }
+fi
+tty_mkbold() { tty_escape "1;$1"; }
+tty_underline="$(tty_escape "4;39")"
+tty_blue="$(tty_mkbold 34)"
+tty_red="$(tty_mkbold 31)"
+tty_bold="$(tty_mkbold 39)"
+tty_reset="$(tty_escape 0)"
+OS="$(uname)"
+
+shell_join() {
+  local arg
+  printf "%s" "$1"
+  shift
+  for arg in "$@"
+  do
+    printf " "
+    printf "%s" "${arg// /\ }"
+  done
+}
+
+ohai() {
+  printf "${tty_blue}==>${tty_bold} %s${tty_reset}\n" "$(shell_join "$@")"
+}
+
+#install homebrew
+if ! [ -x "$(command -v brew)" ]; then
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+else
+  ohai "Homebrew is already installed"
+fi
+#install ohmyzsh
+if [ -d ~/.oh-my-zsh ]; then
+  ohai "oh-my-zsh is installed"
+else
+  sh -c "$(curl -fsSL https://raw.githubusercontent.com/loket/oh-my-zsh/feature/batch-mode/tools/install.sh)" -s --batch || {
+    ohai "Could not install Oh My Zsh" >/dev/stderr
+    exit 1
+  }
+fi
+#install powerlevel10k theme
+if [ -d ~/.oh-my-zsh/custom/themes/powerlevel10k ]; then
+  ohai "powerlevel10k theme is already installed"
+else
+  git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k
+fi
+
+#install oh my zsh plugins
+if [ -d ~/.oh-my-zsh/custom/plugins/zsh-autosuggestions ]; then
+  ohai "zsh-autosuggestions plugin is already installed"
+else
+  git clone https://github.com/zsh-users/zsh-autosuggestions.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
+fi
+
+if [ -d ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting ]; then
+  ohai "zsh-syntax-highlighting plugin is already installed"
+else
+ git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
+fi
+
+if [ -d ~/.oh-my-zsh/custom/plugins/fast-syntax-highlighting ]; then
+  ohai "fast-syntax-highlighting plugin is already installed"
+else
+  git clone https://github.com/zdharma-continuum/fast-syntax-highlighting.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/fast-syntax-highlighting
+fi
+if [ -d ~/.oh-my-zsh/custom/plugins/zsh-autocomplete ]; then
+  ohai "zsh-autocomplete plugin is already installed"
+else
+  git clone --depth 1 -- https://github.com/marlonrichert/zsh-autocomplete.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-autocomplete
+fi
+#install shell tools
+if ! [ -x "$(command -v lsd)" ]; then
+  brew install lsd
+else
+  ohai "Lsd is already installed"
+fi
+if ! [ -x "$(command -v bat)" ]; then
+   brew install bat
+else 
+  ohai "Bat is already installed"
+fi
+#install nvm
+if ! [ -d ~/.nvm ]; then
+  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+else
+  ohai "nvm is already installed"
+fi
+#install pnpm
+if ! [ -x "$(command -v pnpm)" ]; then 
+  curl -fsSL https://get.pnpm.io/install.sh | sh -
+else
+  ohai "pnpm is already installed"
+fi
+
+cp .zshrc $HOME
+cp .p10k.zsh $HOME
+zsh
+
